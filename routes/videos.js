@@ -2,23 +2,100 @@ const express = require('express');
 const router = express.Router();
 const { Video, User, Comment } = require('../models');
 const { enhancedCheckJwt } = require('../middleware/auth');
+const { Op } = require('sequelize');
 
-// Get all videos - Publicly Accessible
-router.get('/', async (req, res) => {
+// Middleware to optionally check authentication
+const optionalCheckJwt = (req, res, next) => {
+  if (req.headers.authorization) {
+    enhancedCheckJwt(req, res, next);
+  } else {
+    next();
+  }
+};
+
+// Get all videos - Can include favorites if authenticated
+router.get('/', optionalCheckJwt, async (req, res) => {
+  const { page = 1, limit = 10, searchTerm = '', showFavorites = false } = req.query;
+  const userAuth0Id = req.user?.sub; // Extract the user ID from the authenticated request, if available
+
   try {
-    const videos = await Video.findAll({
-      attributes: ['id', 'title', 'description', 'thumbnail', 'views', 'uploadDate', 'videoUrl'],
+    // Check if the request is for favorites and if the user is authenticated
+    if (showFavorites === 'true' && userAuth0Id) {
+      // Fetch the user's favorited videos
+      const user = await User.findOne({
+        where: { auth0Id: userAuth0Id },
+        include: [{ model: Video, as: 'FavoritedVideos', include: [{ model: Comment, include: [{ model: User, attributes: ['displayName'] }] }] }],
+      });
+
+      // If no user or no favorites, return an empty response
+      if (!user || user.FavoritedVideos.length === 0) {
+        return res.json({
+          total: 0,
+          videos: [],
+          page: 1,
+          pages: 0,
+        });
+      }
+
+      // Return all favorited videos, bypassing pagination since it's specific to favorites
+      return res.json({
+        total: user.FavoritedVideos.length,
+        videos: user.FavoritedVideos.map(video => ({
+          ...video.toJSON(),
+          isFavorite: true,
+        })),
+        page: 1,
+        pages: 1,
+      });
+    }
+
+    // Regular video fetching logic if not showing favorites
+    const offset = (page - 1) * limit;
+    let whereClause = searchTerm ? { title: { [Op.iLike]: `%${searchTerm}%` } } : {};
+
+    // Fetch the paginated videos
+    const videos = await Video.findAndCountAll({
+      where: whereClause,
+      offset: parseInt(offset, 10),
+      limit: parseInt(limit, 10),
+      order: [['uploadDate', 'DESC']],
       include: [
-        { model: User, as: 'Likes', attributes: ['id', 'auth0Id'], through: { attributes: [] } },
-        { model: Comment, include: [{ model: User, attributes: ['id', 'auth0Id'] }] },
+        { model: User, as: 'Uploader', attributes: ['id', 'auth0Id'] },
+        { model: Comment, include: [{ model: User, attributes: ['displayName'] }] },
       ],
     });
-    res.json(videos);
+
+    // Check if videos are favorited for authenticated users
+    let favoritedVideoIds = [];
+    if (userAuth0Id) {
+      const user = await User.findOne({
+        where: { auth0Id: userAuth0Id },
+        include: [{ model: Video, as: 'FavoritedVideos', attributes: ['id'] }],
+      });
+
+      if (user && user.FavoritedVideos.length > 0) {
+        favoritedVideoIds = user.FavoritedVideos.map((video) => video.id);
+      }
+    }
+
+    // Map the videos to include isFavorite status
+    const videosWithFavorites = videos.rows.map((video) => ({
+      ...video.toJSON(),
+      isFavorite: favoritedVideoIds.includes(video.id),
+    }));
+
+    res.json({
+      total: videos.count,
+      videos: videosWithFavorites,
+      page: parseInt(page, 10),
+      pages: Math.ceil(videos.count / limit),
+    });
   } catch (error) {
     console.error('Error fetching videos:', error);
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // Get user's favorited videos - Requires Authentication
 router.get('/favorites', enhancedCheckJwt, async (req, res) => {
@@ -30,7 +107,6 @@ router.get('/favorites', enhancedCheckJwt, async (req, res) => {
     });
 
     if (!user) {
-      console.log('No user found with Auth0 ID:', userAuth0Id);
       return res.json([]);
     }
 
@@ -42,9 +118,13 @@ router.get('/favorites', enhancedCheckJwt, async (req, res) => {
 });
 
 // Get specific video by ID - Publicly Accessible
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalCheckJwt, async (req, res) => {
   try {
-    const video = await Video.findByPk(req.params.id, {
+    const videoId = req.params.id;
+    const userAuth0Id = req.user?.sub;
+    let isFavorite = false;
+
+    const video = await Video.findByPk(videoId, {
       attributes: ['id', 'title', 'description', 'thumbnail', 'views', 'uploadDate', 'videoUrl'],
       include: [
         {
@@ -58,11 +138,26 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Video not found' });
     }
 
+    // Check if the video is favorited by the user
+    if (userAuth0Id) {
+      const user = await User.findOne({
+        where: { auth0Id: userAuth0Id },
+        include: [{ model: Video, as: 'FavoritedVideos', where: { id: videoId }, required: false }],
+      });
+
+      if (user && user.FavoritedVideos.length > 0) {
+        isFavorite = true;
+      }
+    }
+
     // Increment the view count
     video.views += 1;
     await video.save();
 
-    res.json(video);
+    res.json({
+      ...video.toJSON(),
+      isFavorite, // Include the favorite status in the response
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

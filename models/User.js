@@ -12,8 +12,8 @@ User.init({
   },
   displayName: {
     type: DataTypes.STRING,
-    allowNull: true, // Allow users to update their display names later
-  }
+    allowNull: true,
+  },
 }, {
   sequelize,
   modelName: 'User',
