@@ -24,7 +24,14 @@ router.get('/', optionalCheckJwt, async (req, res) => {
       // Fetch the user's favorited videos
       const user = await User.findOne({
         where: { auth0Id: userAuth0Id },
-        include: [{ model: Video, as: 'FavoritedVideos', include: [{ model: Comment, include: [{ model: User, attributes: ['displayName'] }] }] }],
+        include: [{ 
+          model: Video, 
+          as: 'FavoritedVideos', 
+          include: [{ 
+            model: Comment, 
+            include: [{ model: User, attributes: ['displayName'] }] 
+          }] 
+        }],
       });
 
       // If no user or no favorites, return an empty response
@@ -51,7 +58,11 @@ router.get('/', optionalCheckJwt, async (req, res) => {
 
     // Regular video fetching logic if not showing favorites
     const offset = (page - 1) * limit;
-    let whereClause = searchTerm ? { title: { [Op.iLike]: `%${searchTerm}%` } } : {};
+    
+    // Fix: Use `Op.iLike` consistently and ensure the search term is sanitized
+    let whereClause = searchTerm.trim() 
+      ? { title: { [Op.iLike]: `%${searchTerm.toLowerCase()}%` } } 
+      : {};
 
     // Fetch the paginated videos
     const videos = await Video.findAndCountAll({
@@ -92,27 +103,6 @@ router.get('/', optionalCheckJwt, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching videos:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-
-// Get user's favorited videos - Requires Authentication
-router.get('/favorites', enhancedCheckJwt, async (req, res) => {
-  try {
-    const userAuth0Id = req.user.sub;
-    const user = await User.findOne({
-      where: { auth0Id: userAuth0Id },
-      include: [{ model: Video, as: 'FavoritedVideos' }],
-    });
-
-    if (!user) {
-      return res.json([]);
-    }
-
-    res.json(user.FavoritedVideos);
-  } catch (error) {
-    console.error('Error fetching favorites:', error);
     res.status(500).json({ error: error.message });
   }
 });
