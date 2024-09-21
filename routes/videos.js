@@ -245,45 +245,59 @@ const s3 = new AWS.S3({
 const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 500 * 1024 * 1024 }, // 50 MB limit (adjust as needed)
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB limit (adjust as needed)
   fileFilter: (req, file, cb) => {
-    const filetypes = /mp4|mkv|webm/;
+    // Allow both video and image files
+    const filetypes = /mp4|mkv|webm|jpeg|jpg|png/;
     const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = filetypes.test(file.mimetype);
 
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Only video files are allowed!'));
+      cb(new Error('Only video and image files are allowed!'));
     }
   },
 });
 
 // Upload video route
-router.post('/upload', enhancedCheckJwt, upload.single('file'), async (req, res) => {
-  const { originalname, buffer } = req.file;
+router.post('/upload', enhancedCheckJwt, upload.fields([{ name: 'file' }, { name: 'thumbnail' }]), async (req, res) => {
+  const { originalname, buffer } = req.files.file[0];
+  const { buffer: thumbnailBuffer } = req.files.thumbnail[0]; // Thumbnail file
   const userAuth0Id = req.user.sub;
-  const { title, description } = req.body; // Ensure the title and description are extracted from the request body
+  const { title, description } = req.body;
 
   try {
-    // Define the S3 upload parameters
-    const uploadParams = {
+    // Define the S3 upload parameters for video
+    const videoUploadParams = {
       Bucket: process.env.CLOUDFLARE_BUCKET_NAME,
-      Key: `videos/${Date.now()}_${originalname}`, // Modify the key as needed
+      Key: `videos/${Date.now()}_${originalname}`,
       Body: buffer,
-      ContentType: req.file.mimetype,
-      ACL: 'public-read', // Optional: Set permissions (public/private)
+      ContentType: req.files.file[0].mimetype,
+      ACL: 'public-read',
     };
 
-    // Upload the file to R2
-    const uploadResult = await s3.upload(uploadParams).promise();
+    // Define the S3 upload parameters for thumbnail
+    const thumbnailUploadParams = {
+      Bucket: process.env.CLOUDFLARE_BUCKET_NAME,
+      Key: `thumbnails/${Date.now()}_thumbnail.jpg`,
+      Body: thumbnailBuffer,
+      ContentType: 'image/jpeg',
+      ACL: 'public-read',
+    };
+
+    // Upload the video and thumbnail to R2
+    const [videoUploadResult, thumbnailUploadResult] = await Promise.all([
+      s3.upload(videoUploadParams).promise(),
+      s3.upload(thumbnailUploadParams).promise(),
+    ]);
 
     // Store the video metadata in your database
     const newVideo = await Video.create({
-      title: title,
-      description: description,
-      videoUrl: uploadResult.Location,
-      thumbnail: '',
+      title,
+      description,
+      videoUrl: `${process.env.BUCKET_URL}/${videoUploadResult.Key}`,
+      thumbnail: `${process.env.BUCKET_URL}/${thumbnailUploadResult.Key}`,
       views: 0,
       uploadDate: new Date(),
       UploaderId: userAuth0Id,
@@ -292,7 +306,8 @@ router.post('/upload', enhancedCheckJwt, upload.single('file'), async (req, res)
     res.status(201).json({
       message: 'Video uploaded successfully',
       video: newVideo,
-      url: uploadResult.Location,
+      url: videoUploadResult.Location,
+      thumbnailUrl: thumbnailUploadResult.Location,
     });
   } catch (error) {
     console.error('Error uploading video:', error);
