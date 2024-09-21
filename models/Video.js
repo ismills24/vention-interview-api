@@ -16,6 +16,14 @@ const Video = sequelize.define('Video', {
     defaultValue: DataTypes.NOW,
   },
   videoUrl: DataTypes.STRING,
+  UploaderId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    references: {
+      model: User,
+      key: 'auth0Id',
+    },
+  },
 });
 
 // Define the association with User after both models are defined

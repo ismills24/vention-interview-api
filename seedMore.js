@@ -47,7 +47,7 @@ async function seedVideos() {
         views: faker.number.int({ min: 0, max: 1000 }),
         uploadDate: faker.date.past(),
         videoUrl: 'https://cdn.pixabay.com/video/2016/02/29/2304-157269929_large.mp4',
-        UploaderId: randomUser.id, // Ensure this matches an existing user
+        UploaderId: randomUser.auth0Id, // Ensure this matches an existing user
       });
     }
 

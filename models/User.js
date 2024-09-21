@@ -9,6 +9,7 @@ User.init({
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
+    primaryKey: true,
   },
   displayName: {
     type: DataTypes.STRING,
@@ -17,6 +18,7 @@ User.init({
 }, {
   sequelize,
   modelName: 'User',
+  timestamps: true,
 });
 
 module.exports = User;

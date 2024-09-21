@@ -3,6 +3,9 @@ const router = express.Router();
 const { Video, User, Comment } = require('../models');
 const { enhancedCheckJwt } = require('../middleware/auth');
 const { Op } = require('sequelize');
+const AWS = require('aws-sdk');
+const multer = require('multer');
+const path = require('path');
 
 // Middleware to optionally check authentication
 const optionalCheckJwt = (req, res, next) => {
@@ -71,7 +74,7 @@ router.get('/', optionalCheckJwt, async (req, res) => {
       limit: parseInt(limit, 10),
       order: [['uploadDate', 'DESC']],
       include: [
-        { model: User, as: 'Uploader', attributes: ['id', 'auth0Id'] },
+        { model: User, as: 'Uploader', attributes: ['auth0Id', 'displayName'] },
         { model: Comment, include: [{ model: User, attributes: ['displayName'] }] },
       ],
     });
@@ -200,7 +203,7 @@ router.post('/:id/comments', enhancedCheckJwt, async (req, res) => {
 
     const comment = await Comment.create({
       content: req.body.content,
-      UserId: user.id,
+      UserId: user.auth0Id, // Use auth0Id as the UserId
       VideoId: video.id,
     });
     res.json({ ...comment.toJSON(), displayName: user.displayName });
@@ -226,6 +229,74 @@ router.get('/:id/comments', async (req, res) => {
     res.json(comments);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Configure AWS SDK to use Cloudflare R2
+const s3 = new AWS.S3({
+  endpoint: process.env.CLOUDFLARE_ENDPOINT,
+  accessKeyId: process.env.CLOUDFLARE_ACCESS_KEY_ID,
+  secretAccessKey: process.env.CLOUDFLARE_SECRET_ACCESS_KEY,
+  region: 'auto',
+  signatureVersion: 'v4',
+});
+
+// Set up Multer for handling file uploads
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 500 * 1024 * 1024 }, // 50 MB limit (adjust as needed)
+  fileFilter: (req, file, cb) => {
+    const filetypes = /mp4|mkv|webm/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only video files are allowed!'));
+    }
+  },
+});
+
+// Upload video route
+router.post('/upload', enhancedCheckJwt, upload.single('file'), async (req, res) => {
+  const { originalname, buffer } = req.file;
+  const userAuth0Id = req.user.sub;
+  const { title, description } = req.body; // Ensure the title and description are extracted from the request body
+
+  try {
+    // Define the S3 upload parameters
+    const uploadParams = {
+      Bucket: process.env.CLOUDFLARE_BUCKET_NAME,
+      Key: `videos/${Date.now()}_${originalname}`, // Modify the key as needed
+      Body: buffer,
+      ContentType: req.file.mimetype,
+      ACL: 'public-read', // Optional: Set permissions (public/private)
+    };
+
+    // Upload the file to R2
+    const uploadResult = await s3.upload(uploadParams).promise();
+
+    // Store the video metadata in your database
+    const newVideo = await Video.create({
+      title: title,
+      description: description,
+      videoUrl: uploadResult.Location,
+      thumbnail: '',
+      views: 0,
+      uploadDate: new Date(),
+      UploaderId: userAuth0Id,
+    });
+
+    res.status(201).json({
+      message: 'Video uploaded successfully',
+      video: newVideo,
+      url: uploadResult.Location,
+    });
+  } catch (error) {
+    console.error('Error uploading video:', error);
+    res.status(500).json({ error: 'Failed to upload video' });
   }
 });
 
