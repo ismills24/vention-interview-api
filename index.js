@@ -16,7 +16,9 @@ app.use(express.json());
 app.use('/api/videos', videoRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/comments', commentRoutes);
-
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
 sequelize.authenticate()
   .then(() => {
     console.log('Database connected successfully.');
