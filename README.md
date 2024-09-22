@@ -281,10 +281,6 @@ The backend will be available at http://localhost:5000.
 Create a .env file in the root of your project and configure the following:
 
 ```env
-# Server Config
-PORT=5000
-CORS_ORIGIN=http://localhost:3000
-
 # Auth0 Config
 AUTH0_DOMAIN=your-auth0-domain
 AUTH0_AUDIENCE=your-auth0-audience
