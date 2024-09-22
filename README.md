@@ -51,10 +51,10 @@ SoftServe's backend handles video streaming, user management, commenting, and mo
 ## API Overview
 This backend exposes several endpoints grouped under three main routes: /videos, /comments, and /users.
 
-API Specification
-Base URL: /api
-Authentication
-Most endpoints require JWT authentication. Use the Authorization header with a bearer token.
+### API Specification
+### Base URL: `/api`
+### Authentication
+- Most endpoints require JWT authentication. Use the `Authorization` header with a bearer token.
 Videos
 1. Get All Videos
 Endpoint: /videos
@@ -67,7 +67,6 @@ showFavorites (optional): Set to true to show favorited videos only (requires au
 Response:
 200 OK: List of videos with pagination details.
 ```json
-Copy code
 {
   "total": 100,
   "videos": [
