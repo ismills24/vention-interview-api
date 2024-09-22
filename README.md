@@ -62,12 +62,12 @@ This backend exposes several endpoints grouped under three main routes: /videos,
 - Endpoint: `/videos`
 - Method: `GET`
 - Query Parameters:
-  *`page` (optional, default: 1): Page number for pagination.
-  *`limit` (optional, default: 10): Number of videos per page.
-  *`searchTerm` (optional): Search query for filtering videos by title.
-  *`showFavorites` (optional): Set to true to show favorited videos only (requires authentication).
+-  `page` (optional, default: 1): Page number for pagination.
+-  `limit` (optional, default: 10): Number of videos per page.
+-  `searchTerm` (optional): Search query for filtering videos by title.
+-  `showFavorites` (optional): Set to true to show favorited videos only (requires authentication).
 -Response:
-  *200 OK: List of videos with pagination details.
+-  *200 OK*: List of videos with pagination details.
 ```json
 {
   "total": 100,
