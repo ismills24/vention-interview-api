@@ -1,4 +1,3 @@
-// routes/comments.js
 const express = require('express');
 const router = express.Router();
 const { Comment, User, Video } = require('../models');
@@ -34,9 +33,9 @@ router.post('/:id/dislike', enhancedCheckJwt, async (req, res) => {
   }
 });
 
+// Endpoint to delete a comment
 router.delete('/:id', enhancedCheckJwt, async (req, res) => {
     try {
-      // Ensure the User model is being included when fetching the comment
       const comment = await Comment.findByPk(req.params.id, {
         include: [{ model: User, attributes: ['auth0Id'] }],
       });

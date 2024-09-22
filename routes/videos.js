@@ -7,7 +7,11 @@ const AWS = require('aws-sdk');
 const multer = require('multer');
 const path = require('path');
 
-// Middleware to optionally check authentication
+/* -- Configuration -- */
+
+const UPLOAD_SIZE_LIMIT_MB = 300;
+
+// Middleware to 'optionally' check authentication
 const optionalCheckJwt = (req, res, next) => {
   if (req.headers.authorization) {
     enhancedCheckJwt(req, res, next);
@@ -16,15 +20,41 @@ const optionalCheckJwt = (req, res, next) => {
   }
 };
 
-// Get all videos - Can include favorites if authenticated
+// Configure AWS SDK to use Cloudflare R2
+const s3 = new AWS.S3({
+  endpoint: process.env.CLOUDFLARE_ENDPOINT,
+  accessKeyId: process.env.CLOUDFLARE_ACCESS_KEY_ID,
+  secretAccessKey: process.env.CLOUDFLARE_SECRET_ACCESS_KEY,
+  region: 'auto',
+  signatureVersion: 'v4',
+});
+
+// multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: UPLOAD_SIZE_LIMIT_MB * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const filetypes = /mp4|mkv|webm|jpeg|jpg|png/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only video and image files are allowed!'));
+    }
+  },
+});
+
+/* -- Endpoints -- */
+
+// Generic endpoint to get all videos, can include search query or filter to only show favorites
 router.get('/', optionalCheckJwt, async (req, res) => {
   const { page = 1, limit = 10, searchTerm = '', showFavorites = false } = req.query;
-  const userAuth0Id = req.user?.sub; // Extract the user ID from the authenticated request, if available
-
+  const userAuth0Id = req.user?.sub;
   try {
-    // Check if the request is for favorites and if the user is authenticated
     if (showFavorites === 'true' && userAuth0Id) {
-      // Fetch the user's favorited videos
       const user = await User.findOne({
         where: { auth0Id: userAuth0Id },
         include: [{ 
@@ -47,7 +77,7 @@ router.get('/', optionalCheckJwt, async (req, res) => {
         });
       }
 
-      // Return all favorited videos, bypassing pagination since it's specific to favorites
+      // Return all favorited videos, ignore pagination
       return res.json({
         total: user.FavoritedVideos.length,
         videos: user.FavoritedVideos.map(video => ({
@@ -62,12 +92,10 @@ router.get('/', optionalCheckJwt, async (req, res) => {
     // Regular video fetching logic if not showing favorites
     const offset = (page - 1) * limit;
     
-    // Fix: Use `Op.iLike` consistently and ensure the search term is sanitized
     let whereClause = searchTerm.trim() 
       ? { title: { [Op.iLike]: `%${searchTerm.toLowerCase()}%` } } 
       : {};
 
-    // Fetch the paginated videos
     const videos = await Video.findAndCountAll({
       where: whereClause,
       offset: parseInt(offset, 10),
@@ -110,7 +138,7 @@ router.get('/', optionalCheckJwt, async (req, res) => {
   }
 });
 
-// Get specific video by ID - Publicly Accessible
+// Endpoint for getting a specific video by id - Publicly Accessible
 router.get('/:id', optionalCheckJwt, async (req, res) => {
   try {
     const videoId = req.params.id;
@@ -156,7 +184,7 @@ router.get('/:id', optionalCheckJwt, async (req, res) => {
   }
 });
 
-// Toggle favorite status - Requires Authentication
+// Endpoint to toggle favorite status for a specific video - Requires Authentication
 router.post('/:id/favorite', enhancedCheckJwt, async (req, res) => {
   try {
     const userAuth0Id = req.user.sub;
@@ -187,33 +215,39 @@ router.post('/:id/favorite', enhancedCheckJwt, async (req, res) => {
   }
 });
 
-// Add a comment - Requires Authentication
+// Endpoint to add a comment - Requires Authentication
 router.post('/:id/comments', enhancedCheckJwt, async (req, res) => {
   try {
+    // Extract Auth0 user ID from JWT
     const userAuth0Id = req.user.sub;
-    let user = await User.findOne({ where: { auth0Id: userAuth0Id } });
-    if (!user) {
-      user = await User.create({ auth0Id: userAuth0Id });
-    }
+    const { content } = req.body; // Extract the comment content from the request body
 
+    // Find the video by its ID
     const video = await Video.findByPk(req.params.id);
     if (!video) {
       return res.status(404).json({ error: 'Video not found' });
     }
 
+    // Create a new comment and associate it directly with the user's auth0Id and the video
     const comment = await Comment.create({
-      content: req.body.content,
-      UserId: user.auth0Id, // Use auth0Id as the UserId
+      content,
+      UserAuth0Id: userAuth0Id, // Set the UserAuth0Id directly to link the comment to the authenticated user
       VideoId: video.id,
     });
-    res.json({ ...comment.toJSON(), displayName: user.displayName });
+
+    // Fetch the displayName from the User model using auth0Id to display the comment author correctly
+    const user = await User.findOne({ where: { auth0Id: userAuth0Id } });
+    const displayName = user ? user.displayName : 'Anonymous';
+
+    // Send the comment back along with the user's displayName
+    res.json({ ...comment.toJSON(), displayName });
   } catch (error) {
     console.error('Error adding comment:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Fetch comments for a video - Publicly Accessible
+// Endpoint for getting comments for a specific video by id - Publicly Accessible
 router.get('/:id/comments', async (req, res) => {
   try {
     const comments = await Comment.findAll({
@@ -232,35 +266,7 @@ router.get('/:id/comments', async (req, res) => {
   }
 });
 
-// Configure AWS SDK to use Cloudflare R2
-const s3 = new AWS.S3({
-  endpoint: process.env.CLOUDFLARE_ENDPOINT,
-  accessKeyId: process.env.CLOUDFLARE_ACCESS_KEY_ID,
-  secretAccessKey: process.env.CLOUDFLARE_SECRET_ACCESS_KEY,
-  region: 'auto',
-  signatureVersion: 'v4',
-});
-
-// Set up Multer for handling file uploads
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB limit (adjust as needed)
-  fileFilter: (req, file, cb) => {
-    // Allow both video and image files
-    const filetypes = /mp4|mkv|webm|jpeg|jpg|png/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only video and image files are allowed!'));
-    }
-  },
-});
-
-// Upload video route
+// Endpoint for uploading a video and thumbnail - Requires Authentication
 router.post('/upload', enhancedCheckJwt, upload.fields([{ name: 'file' }, { name: 'thumbnail' }]), async (req, res) => {
   const { originalname, buffer } = req.files.file[0];
   const { buffer: thumbnailBuffer } = req.files.thumbnail[0]; // Thumbnail file

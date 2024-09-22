@@ -1,7 +1,7 @@
 // models/Video.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('./database');
-const User = require('./User'); // Import User correctly
+const User = require('./User');
 
 const Video = sequelize.define('Video', {
   title: DataTypes.STRING,
@@ -26,7 +26,6 @@ const Video = sequelize.define('Video', {
   },
 });
 
-// Define the association with User after both models are defined
 Video.belongsTo(User, { as: 'Uploader', foreignKey: 'UploaderId' });
 
 module.exports = Video;

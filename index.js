@@ -22,7 +22,6 @@ app.get('/health', (req, res) => {
 sequelize.authenticate()
   .then(() => {
     console.log('Database connected successfully.');
-    // Sync database and start server
     sequelize.sync().then(() => {
       app.listen(process.env.PORT || 5000, () => {
         console.log('Server is running on port 5000');

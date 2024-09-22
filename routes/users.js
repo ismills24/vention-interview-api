@@ -1,11 +1,9 @@
-// routes/users.js
 const express = require('express');
 const router = express.Router();
 const { enhancedCheckJwt } = require('../middleware/auth');
 const { User } = require('../models');
 
-// Update Profile Route
-// Update Profile Route
+// Endpoint to update profile (displayName)
 router.post('/updateProfile', enhancedCheckJwt, async (req, res) => {
     try {
       const userAuth0Id = req.user.sub;
@@ -16,10 +14,9 @@ router.post('/updateProfile', enhancedCheckJwt, async (req, res) => {
         return res.status(404).json({ error: 'User not found' });
       }
   
-      // Update displayName and save the user
       user.displayName = displayName;
       await user.save();
-      await user.reload(); // Ensure latest state is fetched after update
+      await user.reload();
   
       console.log('Updated user: ', user);
       res.json({ message: 'Profile updated successfully!', user });
@@ -29,7 +26,7 @@ router.post('/updateProfile', enhancedCheckJwt, async (req, res) => {
     }
   });
   
-  // Fetch Profile Route
+  // Endpoint to get a profile
   router.get('/profile', enhancedCheckJwt, async (req, res) => {
     try {
       const userAuth0Id = req.user.sub;

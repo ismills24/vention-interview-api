@@ -3,7 +3,6 @@ const User = require('./User');
 const Video = require('./Video');
 const Comment = require('./Comment');
 
-// Define Associations
 User.belongsToMany(Video, { through: 'UserLikes', as: 'LikedVideos' });
 Video.belongsToMany(User, { through: 'UserLikes', as: 'Likes' });
 

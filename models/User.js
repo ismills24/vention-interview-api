@@ -1,4 +1,3 @@
-// models/User.js
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('./database');
 
