@@ -55,13 +55,15 @@ This backend exposes several endpoints grouped under three main routes: /videos,
 ### Base URL: `/api`
 ### Authentication
 - Most endpoints require JWT authentication. Use the `Authorization` header with a bearer token.
-Videos
+<hr/>
+
+### Videos
 1. Get All Videos
-Endpoint: /videos
-Method: GET
-Query Parameters:
-page (optional, default: 1): Page number for pagination.
-limit (optional, default: 10): Number of videos per page.
+- Endpoint: /videos
+- Method: GET
+- Query Parameters:
+  --page (optional, default: 1): Page number for pagination.
+  --limit (optional, default: 10): Number of videos per page.
 searchTerm (optional): Search query for filtering videos by title.
 showFavorites (optional): Set to true to show favorited videos only (requires authentication).
 Response:
