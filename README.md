@@ -215,7 +215,7 @@ This backend exposes several endpoints grouped under three main routes: /videos,
 { "message": "Comment deleted successfully" }
 ```
 ### User Profile
-****1. Get User Profile
+#### 1. Get User Profile
 - Endpoint: /users/profile
 - Method: GET
 - Headers:
