@@ -284,7 +284,6 @@ Create a .env file in the root of your project and configure the following:
 # Server Config
 PORT=5000
 CORS_ORIGIN=http://localhost:3000
-```
 
 # Auth0 Config
 AUTH0_DOMAIN=your-auth0-domain
@@ -299,13 +298,14 @@ CLOUDFLARE_ACCESS_KEY_ID=your-access-key-id
 CLOUDFLARE_SECRET_ACCESS_KEY=your-secret-access-key
 CLOUDFLARE_BUCKET_NAME=your-bucket-name
 BUCKET_URL=https://your-cloudflare-bucket-url
-Authentication
+```
+### Authentication
 Authentication is handled by Auth0, integrating seamlessly with the backend APIs through JWTs. For protected routes, enhancedCheckJwt middleware validates the token, creates a user profile if it doesn't exist, and attaches user information to the request.
 
-Future Improvements
-Microservices Architecture: Split functionalities (video, user, and comments) into separate microservices to improve scalability and fault tolerance.
-CDN Integration: Use a CDN to cache video files closer to users, reducing load times and server costs.
-Video Transcoding: Implement video transcoding to support various resolutions, optimizing streaming quality based on user bandwidth.
+### Future Improvements
+- Microservices Architecture: Split functionalities (video, user, and comments) into separate microservices to improve scalability and fault tolerance.
+- CDN Integration: Use a CDN to cache video files closer to users, reducing load times and server costs.
+- Video Transcoding: Implement video transcoding to support various resolutions, optimizing streaming quality based on user bandwidth.
 Enhanced Caching: Use Redis or other caching solutions to reduce database load, especially for frequently accessed data like popular videos.
-Conclusion
+### Conclusion
 The SoftServe backend prototype provides the foundation for a scalable, secure, and feature-rich video streaming platform. It addresses core functionalities like video uploading, viewing, and interaction, and offers clear pathways for future scalability and optimization.
