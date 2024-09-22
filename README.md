@@ -58,7 +58,7 @@ This backend exposes several endpoints grouped under three main routes: /videos,
 <hr/>
 
 ### Videos
-1. Get All Videos
+#### 1. Get All Videos
 - Endpoint: `/videos`
 - Method: `GET`
 - Query Parameters:
@@ -84,7 +84,7 @@ This backend exposes several endpoints grouped under three main routes: /videos,
   "pages": 10
 }
 ```
-2. Get Specific Video
+#### 2. Get Specific Video
 - Endpoint: `/videos/:id`
 - Method: `GET`
 - Path Parameters:
@@ -102,7 +102,7 @@ This backend exposes several endpoints grouped under three main routes: /videos,
   "isFavorite": false
 }
 ```
-3. Upload a Video
+#### 3. Upload a Video
 - Endpoint: `/videos/upload`
 - Method: `POST`
 - Headers:
@@ -125,7 +125,7 @@ This backend exposes several endpoints grouped under three main routes: /videos,
   }
 }
 ```
-4. Toggle Favorite Status
+#### 4. Toggle Favorite Status
 - Endpoint: `/videos/:id/favorite`
 - Method: `POST`
 - Headers:
@@ -138,7 +138,7 @@ This backend exposes several endpoints grouped under three main routes: /videos,
 { "message": "Video added to favorites" }
 ```
 ### Comments
-1. Get Comments for a Video
+#### 1. Get Comments for a Video
 - Endpoint: `/videos/:id/comments`
 - Method: `GET`
 - Path Parameters:
@@ -158,7 +158,7 @@ This backend exposes several endpoints grouped under three main routes: /videos,
   }
 ]
 ```
-2. Add a Comment
+#### 2. Add a Comment
 - Endpoint: `/videos/:id/comments`
 - Method: `POST`
 - Headers:
@@ -178,7 +178,7 @@ This backend exposes several endpoints grouped under three main routes: /videos,
   "displayName": "JohnDoe"
 }
 ```
-3. Like a Comment
+#### 3. Like a Comment
 - Endpoint: /comments/:id/like
 - Method: POST
 - Headers:
@@ -190,7 +190,7 @@ This backend exposes several endpoints grouped under three main routes: /videos,
 ```json
 { "likes": 6 }
 ```
-4. Dislike a Comment
+#### 4. Dislike a Comment
 - Endpoint: /comments/:id/dislike
 - Method: POST
 - Headers:
@@ -202,7 +202,7 @@ This backend exposes several endpoints grouped under three main routes: /videos,
 ```json
 { "dislikes": 1 }
 ```
-5. Delete a Comment
+#### 5. Delete a Comment
 - Endpoint: /comments/:id
 - Method: DELETE
 - Headers:
@@ -214,8 +214,8 @@ This backend exposes several endpoints grouped under three main routes: /videos,
 ```json
 { "message": "Comment deleted successfully" }
 ```
-User Profile
-1. Get User Profile
+### User Profile
+****1. Get User Profile
 - Endpoint: /users/profile
 - Method: GET
 - Headers:
@@ -225,7 +225,7 @@ User Profile
 ```json
 { "displayName": "JohnDoe" }
 ```
-2. Update User Profile
+****2. Update User Profile
 - Endpoint: /users/updateProfile
 - Method: POST
 - Headers:
