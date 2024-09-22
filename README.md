@@ -28,7 +28,7 @@ SoftServe's backend handles video streaming, user management, commenting, and mo
 - *Auth0*: Authentication and authorization service.
 - *AWS SDK*: For interacting with Cloudflare R2 using S3-compatible APIs.
 ## Project Structure
-``
+
 /backend
 ├── middleware/            # Middleware for authentication and other purposes
 │   └── auth.js
@@ -45,7 +45,7 @@ SoftServe's backend handles video streaming, user management, commenting, and mo
 ├── .env                   # Environment variables configuration (not in repo)
 ├── index.js               # Entry point of the application
 └── README.md              # This file
-``
+
 API Overview
 This backend exposes several endpoints grouped under three main routes: /videos, /comments, and /users.
 
