@@ -251,40 +251,40 @@ Response:
 - 404 Not Found: Resource not found (e.g., video, comment).
 - 500 Internal Server Error: Server error, usually due to unexpected conditions.
 
-Getting Started
-Prerequisites
-Node.js (v16.x or higher)
-PostgreSQL (configured with a connection URL)
-Cloudflare R2 credentials for file storage
-Installation
-Clone the repository:
+## Getting Started
+### Prerequisites
+- Node.js (v16.x or higher)
+- PostgreSQL (configured with a connection URL)
+- Cloudflare R2 credentials for file storage
+### Installation
+#### Clone the repository:
 
-bash
-Copy code
+```bash
 git clone https://github.com/your-username/softserve-backend.git
 cd softserve-backend
-Install dependencies:
+```
+#### Install dependencies:
 
-bash
-Copy code
+```bash
 npm install
-Set up environment variables (see the section below).
+```
+#### Set up environment variables (see the section below).
 
-Run the development server:
+#### Run the development server:
 
-bash
-Copy code
+```bash
 npm start
+```
 The backend will be available at http://localhost:5000.
 
-Environment Variables
+### Environment Variables
 Create a .env file in the root of your project and configure the following:
 
-env
-Copy code
+```env
 # Server Config
 PORT=5000
 CORS_ORIGIN=http://localhost:3000
+```
 
 # Auth0 Config
 AUTH0_DOMAIN=your-auth0-domain
