@@ -31,7 +31,7 @@ SoftServe's backend handles video streaming, user management, commenting, and mo
 
 ```
 /backend
-├── middleware/            # Middleware for authentication and other purposes
+├── middleware/            # Middleware for authentication
 │   └── auth.js
 ├── models/                # Database models (User, Video, Comment)
 │   ├── Comment.js
@@ -48,30 +48,208 @@ SoftServe's backend handles video streaming, user management, commenting, and mo
 └── README.md              # This file
 ```
 
-API Overview
+## API Overview
 This backend exposes several endpoints grouped under three main routes: /videos, /comments, and /users.
 
-Videos API
-GET /api/videos: Fetches a list of videos with optional search, pagination, and filter for favorites.
-POST /api/videos/upload: Uploads a new video file with an optional thumbnail. Requires authentication.
-GET /api/videos/
-: Retrieves a specific video’s details, including its comments.
-POST /api/videos/
-/favorite: Toggles the favorite status of a video. Requires authentication.
-GET /api/videos/
-/comments: Retrieves comments for a specific video.
-POST /api/videos/
-/comments: Adds a new comment to the video. Requires authentication.
-Comments API
-POST /api/comments/
-/like: Likes a comment.
-POST /api/comments/
-/dislike: Dislikes a comment.
-DELETE /api/comments/
-: Deletes a comment if it belongs to the authenticated user.
-Users API
-POST /api/users/updateProfile: Updates the user’s display name. Requires authentication.
-GET /api/users/profile: Fetches the profile details of the authenticated user.
+API Specification
+Base URL: /api
+Authentication
+Most endpoints require JWT authentication. Use the Authorization header with a bearer token.
+Videos
+1. Get All Videos
+Endpoint: /videos
+Method: GET
+Query Parameters:
+page (optional, default: 1): Page number for pagination.
+limit (optional, default: 10): Number of videos per page.
+searchTerm (optional): Search query for filtering videos by title.
+showFavorites (optional): Set to true to show favorited videos only (requires authentication).
+Response:
+200 OK: List of videos with pagination details.
+```json
+Copy code
+{
+  "total": 100,
+  "videos": [
+    {
+      "id": "1",
+      "title": "Sample Video",
+      "thumbnail": "https://example.com/thumbnail.jpg",
+      "views": 100,
+      "isFavorite": true
+    }
+  ],
+  "page": 1,
+  "pages": 10
+}
+```
+2. Get Specific Video
+Endpoint: /videos/:id
+Method: GET
+Path Parameters:
+id: Video ID.
+Response:
+200 OK: Details of the requested video.
+```json
+{
+  "id": "1",
+  "title": "Sample Video",
+  "description": "Description of the video",
+  "thumbnail": "https://example.com/thumbnail.jpg",
+  "views": 101,
+  "uploadDate": "2024-09-23T10:00:00Z",
+  "isFavorite": false
+}
+```
+3. Upload a Video
+Endpoint: /videos/upload
+Method: POST
+Headers:
+Authorization: Bearer token (required).
+Form Data:
+file: Video file (required).
+thumbnail: Thumbnail image (optional).
+title: Title of the video (required).
+description: Description of the video (optional).
+Response:
+201 Created: Confirmation of the uploaded video.
+```json
+{
+  "message": "Video uploaded successfully",
+  "video": {
+    "id": "1",
+    "title": "Sample Video",
+    "thumbnail": "https://example.com/thumbnail.jpg",
+    "views": 0
+  }
+}
+```
+4. Toggle Favorite Status
+Endpoint: /videos/:id/favorite
+Method: POST
+Headers:
+Authorization: Bearer token (required).
+Path Parameters:
+id: Video ID.
+Response:
+200 OK: Status message indicating the action taken.
+```json
+{ "message": "Video added to favorites" }
+```
+Comments
+1. Get Comments for a Video
+Endpoint: /videos/:id/comments
+Method: GET
+Path Parameters:
+id: Video ID.
+Response:
+200 OK: List of comments.
+```json
+[
+  {
+    "id": "1",
+    "content": "Great video!",
+    "likes": 5,
+    "dislikes": 0,
+    "User": {
+      "displayName": "JohnDoe"
+    }
+  }
+]
+```
+2. Add a Comment
+Endpoint: /videos/:id/comments
+Method: POST
+Headers:
+Authorization: Bearer token (required).
+Path Parameters:
+id: Video ID.
+Request Body:
+json
+Copy code
+{ "content": "Your comment text" }
+Response:
+200 OK: The created comment.
+json
+Copy code
+{
+  "id": "1",
+  "content": "Your comment text",
+  "displayName": "JohnDoe"
+}
+3. Like a Comment
+Endpoint: /comments/:id/like
+Method: POST
+Headers:
+Authorization: Bearer token (required).
+Path Parameters:
+id: Comment ID.
+Response:
+200 OK: Updated like count.
+json
+Copy code
+{ "likes": 6 }
+4. Dislike a Comment
+Endpoint: /comments/:id/dislike
+Method: POST
+Headers:
+Authorization: Bearer token (required).
+Path Parameters:
+id: Comment ID.
+Response:
+200 OK: Updated dislike count.
+json
+Copy code
+{ "dislikes": 1 }
+5. Delete a Comment
+Endpoint: /comments/:id
+Method: DELETE
+Headers:
+Authorization: Bearer token (required).
+Path Parameters:
+id: Comment ID.
+Response:
+200 OK: Confirmation message.
+json
+Copy code
+{ "message": "Comment deleted successfully" }
+User Profile
+1. Get User Profile
+Endpoint: /users/profile
+Method: GET
+Headers:
+Authorization: Bearer token (required).
+Response:
+200 OK: User profile data.
+json
+Copy code
+{ "displayName": "JohnDoe" }
+2. Update User Profile
+Endpoint: /users/updateProfile
+Method: POST
+Headers:
+Authorization: Bearer token (required).
+Request Body:
+json
+Copy code
+{ "displayName": "NewDisplayName" }
+Response:
+200 OK: Confirmation message with updated user details.
+json
+Copy code
+{
+  "message": "Profile updated successfully!",
+  "user": {
+    "displayName": "NewDisplayName"
+  }
+}
+Error Responses
+400 Bad Request: Invalid request parameters or missing required fields.
+401 Unauthorized: Missing or invalid authentication token.
+403 Forbidden: Insufficient permissions for the action.
+404 Not Found: Resource not found (e.g., video, comment).
+500 Internal Server Error: Server error, usually due to unexpected conditions.
+
 Getting Started
 Prerequisites
 Node.js (v16.x or higher)
