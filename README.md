@@ -85,12 +85,12 @@ This backend exposes several endpoints grouped under three main routes: /videos,
 }
 ```
 2. Get Specific Video
-Endpoint: /videos/:id
-Method: GET
-Path Parameters:
-id: Video ID.
-Response:
-200 OK: Details of the requested video.
+- Endpoint: `/videos/:id`
+- Method: `GET`
+- Path Parameters:
+  - `id`: Video ID.
+- Response:
+  - 200 OK: Details of the requested video.
 ```json
 {
   "id": "1",
@@ -103,17 +103,17 @@ Response:
 }
 ```
 3. Upload a Video
-Endpoint: /videos/upload
-Method: POST
-Headers:
-Authorization: Bearer token (required).
-Form Data:
-file: Video file (required).
-thumbnail: Thumbnail image (optional).
-title: Title of the video (required).
-description: Description of the video (optional).
-Response:
-201 Created: Confirmation of the uploaded video.
+- Endpoint: `/videos/upload`
+- Method: `POST`
+- Headers:
+  - `Authorization`: Bearer token (required).
+- Form Data:
+  - `file`: Video file (required).
+  - `thumbnail`: Thumbnail image (optional).
+  - `title`: Title of the video (required).
+  - `description`: Description of the video (optional).
+- Response:
+  - 201 Created: Confirmation of the uploaded video.
 ```json
 {
   "message": "Video uploaded successfully",
@@ -126,25 +126,25 @@ Response:
 }
 ```
 4. Toggle Favorite Status
-Endpoint: /videos/:id/favorite
-Method: POST
-Headers:
-Authorization: Bearer token (required).
-Path Parameters:
-id: Video ID.
-Response:
-200 OK: Status message indicating the action taken.
+- Endpoint: `/videos/:id/favorite`
+- Method: `POST`
+- Headers:
+  - `Authorization`: Bearer token (required).
+- Path Parameters:
+  - `id`: Video ID.
+- Response:
+  - 200 OK: Status message indicating the action taken.
 ```json
 { "message": "Video added to favorites" }
 ```
-Comments
+### Comments
 1. Get Comments for a Video
-Endpoint: /videos/:id/comments
-Method: GET
-Path Parameters:
-id: Video ID.
-Response:
-200 OK: List of comments.
+- Endpoint: `/videos/:id/comments`
+- Method: `GET`
+- Path Parameters:
+  - `id`: Video ID.
+- Response:
+  - 200 OK: List of comments.
 ```json
 [
   {
@@ -159,97 +159,97 @@ Response:
 ]
 ```
 2. Add a Comment
-Endpoint: /videos/:id/comments
-Method: POST
-Headers:
-Authorization: Bearer token (required).
-Path Parameters:
-id: Video ID.
-Request Body:
-json
-Copy code
+- Endpoint: `/videos/:id/comments`
+- Method: `POST`
+- Headers:
+  - `Authorization`: Bearer token (required).
+- Path Parameters:
+  - `id`: Video ID.
+- Request Body:
+```json
 { "content": "Your comment text" }
-Response:
+```
+- Response:
 200 OK: The created comment.
-json
-Copy code
+```json
 {
   "id": "1",
   "content": "Your comment text",
   "displayName": "JohnDoe"
 }
+```
 3. Like a Comment
-Endpoint: /comments/:id/like
-Method: POST
-Headers:
-Authorization: Bearer token (required).
-Path Parameters:
-id: Comment ID.
-Response:
-200 OK: Updated like count.
-json
-Copy code
+- Endpoint: /comments/:id/like
+- Method: POST
+- Headers:
+  - Authorization: Bearer token (required).
+- Path Parameters:
+  - id: Comment ID.
+- Response:
+  - 200 OK: Updated like count.
+```json
 { "likes": 6 }
+```
 4. Dislike a Comment
-Endpoint: /comments/:id/dislike
-Method: POST
-Headers:
-Authorization: Bearer token (required).
-Path Parameters:
-id: Comment ID.
-Response:
-200 OK: Updated dislike count.
-json
-Copy code
+- Endpoint: /comments/:id/dislike
+- Method: POST
+- Headers:
+  - Authorization: Bearer token (required).
+- Path Parameters:
+  - id: Comment ID.
+- Response:
+  - 200 OK: Updated dislike count.
+```json
 { "dislikes": 1 }
+```
 5. Delete a Comment
-Endpoint: /comments/:id
-Method: DELETE
-Headers:
-Authorization: Bearer token (required).
-Path Parameters:
-id: Comment ID.
-Response:
-200 OK: Confirmation message.
-json
-Copy code
+- Endpoint: /comments/:id
+- Method: DELETE
+- Headers:
+  - Authorization: Bearer token (required).
+- Path Parameters:
+  - id: Comment ID.
+- Response:
+  - 200 OK: Confirmation message.
+```json
 { "message": "Comment deleted successfully" }
+```
 User Profile
 1. Get User Profile
-Endpoint: /users/profile
-Method: GET
-Headers:
-Authorization: Bearer token (required).
-Response:
-200 OK: User profile data.
-json
-Copy code
+- Endpoint: /users/profile
+- Method: GET
+- Headers:
+  - Authorization: Bearer token (required).
+- Response:
+  - 200 OK: User profile data.
+```json
 { "displayName": "JohnDoe" }
+```
 2. Update User Profile
-Endpoint: /users/updateProfile
-Method: POST
-Headers:
-Authorization: Bearer token (required).
-Request Body:
-json
-Copy code
+- Endpoint: /users/updateProfile
+- Method: POST
+- Headers:
+  - Authorization: Bearer token (required).
+- Request Body:
+```json
 { "displayName": "NewDisplayName" }
+```
 Response:
-200 OK: Confirmation message with updated user details.
-json
-Copy code
+- 200 OK: Confirmation message with updated user details.
+```json
 {
   "message": "Profile updated successfully!",
   "user": {
     "displayName": "NewDisplayName"
   }
 }
-Error Responses
-400 Bad Request: Invalid request parameters or missing required fields.
-401 Unauthorized: Missing or invalid authentication token.
-403 Forbidden: Insufficient permissions for the action.
-404 Not Found: Resource not found (e.g., video, comment).
-500 Internal Server Error: Server error, usually due to unexpected conditions.
+```
+### Error Responses
+- 400 Bad Request: Invalid request parameters or missing required fields.
+- 401 Unauthorized: Missing or invalid authentication token.
+- 403 Forbidden: Insufficient permissions for the action.
+- 404 Not Found: Resource not found (e.g., video, comment).
+- 500 Internal Server Error: Server error, usually due to unexpected conditions.
 
 Getting Started
 Prerequisites
